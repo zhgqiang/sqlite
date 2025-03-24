@@ -254,7 +254,11 @@ func (m Migrator) CreateIndex(value interface{}, name string) error {
 		if stmt.Schema != nil {
 			if idx := stmt.Schema.LookIndex(name); idx != nil {
 				opts := m.BuildIndexOptions(idx.Fields, stmt)
-				values := []interface{}{clause.Column{Name: idx.Name}, clause.Table{Name: stmt.Table}, opts}
+				idxName := idx.Name
+				if !strings.Contains(idxName, stmt.Table) {
+					idxName = fmt.Sprintf("%s_%s", idx.Name, stmt.Table)
+				}
+				values := []interface{}{clause.Column{Name: idxName}, clause.Table{Name: stmt.Table}, opts}
 
 				createIndexSQL := "CREATE "
 				if idx.Class != "" {
