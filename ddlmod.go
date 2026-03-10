@@ -12,13 +12,15 @@ import (
 )
 
 var (
-	sqliteSeparator    = "`|\"|'|\t"
-	uniqueRegexp       = regexp.MustCompile(fmt.Sprintf(`^CONSTRAINT [%v]?[\w-]+[%v]? UNIQUE (.*)$`, sqliteSeparator, sqliteSeparator))
-	indexRegexp        = regexp.MustCompile(fmt.Sprintf(`(?is)CREATE(?: UNIQUE)? INDEX [%v]?[\w\d-]+[%v]?(?s:.*?)ON (.*)$`, sqliteSeparator, sqliteSeparator))
-	tableRegexp        = regexp.MustCompile(fmt.Sprintf(`(?is)(CREATE TABLE [%v]?[\w\d-]+[%v]?)(?:\s*\((.*)\))?`, sqliteSeparator, sqliteSeparator))
+	sqliteSeparator = "`|\"|'|\t"
+	uniqueRegexp    = regexp.MustCompile(fmt.Sprintf(`^CONSTRAINT [%v]?[\w-]+[%v]? UNIQUE (.*)$`, sqliteSeparator, sqliteSeparator))
+	//indexRegexp     = regexp.MustCompile(fmt.Sprintf(`(?is)CREATE(?: UNIQUE)? INDEX [%v]?[\w\d-]+[%v]?(?s:.*?)ON (.*)$`, sqliteSeparator, sqliteSeparator))
+	indexRegexp = regexp.MustCompile(fmt.Sprintf(`(?is)CREATE(?: UNIQUE)? INDEX [%v]?[!@$()\-A-Za-z0-9_\p{Han}]+[%v]?(?s:.*?)ON (.*)$`, sqliteSeparator, sqliteSeparator))
+	//tableRegexp        = regexp.MustCompile(fmt.Sprintf(`(?is)(CREATE TABLE [%v]?[\w\d-]+[%v]?)(?:\s*\((.*)\))?`, sqliteSeparator, sqliteSeparator))
+	tableRegexp        = regexp.MustCompile(fmt.Sprintf(`(?is)(CREATE TABLE [%v]?[!@$()\-A-Za-z0-9_\p{Han}]+[%v]?)(?:\s*\((.*)\))?`, sqliteSeparator, sqliteSeparator))
 	separatorRegexp    = regexp.MustCompile(fmt.Sprintf("[%v]", sqliteSeparator))
 	columnsRegexp      = regexp.MustCompile(fmt.Sprintf(`[(,][%v]?(\w+)[%v]?`, sqliteSeparator, sqliteSeparator))
-	columnRegexp       = regexp.MustCompile(fmt.Sprintf(`^[%v]?([\w\d]+)[%v]?\s+([\w\(\)\d]+)(.*)$`, sqliteSeparator, sqliteSeparator))
+	columnRegexp       = regexp.MustCompile(fmt.Sprintf(`^[%v]?([!@$()\-A-Za-z0-9_\p{Han}]+)[%v]?\s+([\w\(\)\d]+)(.*)$`, sqliteSeparator, sqliteSeparator))
 	defaultValueRegexp = regexp.MustCompile(`(?i) DEFAULT \(?(.+)?\)?( |COLLATE|GENERATED|$)`)
 	regRealDataType    = regexp.MustCompile(`[^\d](\d+)[^\d]?`)
 )
@@ -203,7 +205,8 @@ func (d *ddl) compile() string {
 }
 
 func (d *ddl) renameTable(dst, src string) error {
-	tableReg, err := regexp.Compile("\\s*('|`|\")?\\b" + regexp.QuoteMeta(src) + "\\b('|`|\")?\\s*")
+	//tableReg, err := regexp.Compile("\\s*('|`|\")?\\b" + regexp.QuoteMeta(src) + "\\b('|`|\")?\\s*")
+	tableReg, err := regexp.Compile(fmt.Sprintf("[`'\"]?%s[`'\"]?", regexp.QuoteMeta(src)))
 	if err != nil {
 		return err
 	}
@@ -265,7 +268,8 @@ func (d *ddl) getColumns() []string {
 			continue
 		}
 
-		reg := regexp.MustCompile("^[\"`']?([\\w\\d]+)[\"`']?")
+		//reg := regexp.MustCompile("^[\"`']?([\\w\\d]+)[\"`']?")
+		reg := regexp.MustCompile("^[\"`']?([!@$()\\-A-Za-z0-9_\\p{Han}]+)[\"`']?")
 		match := reg.FindStringSubmatch(f)
 
 		if match != nil {
